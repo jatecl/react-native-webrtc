@@ -6,6 +6,8 @@ const process = require('process');
 
 const AdmZip = require('adm-zip');
 const tar = require('tar');
+var HttpsProxyAgent = require('https-proxy-agent');
+const _URL = require("url");
 
 const pkg = require('../package.json');
 const builds = pkg['webrtc-builds'];
@@ -13,7 +15,12 @@ const builds = pkg['webrtc-builds'];
 
 async function download(url, filePath) {
     return new Promise((resolve, reject) => {
-        const request = https.get(url, response => {
+        var options = _URL.parse(url);
+        let proxy = process.env["https_proxy"] || process.env["http_proxy"];
+        if (proxy) {
+            options.agent = new HttpsProxyAgent(proxy);
+        }
+        const request = https.get(options, response => {
             if (response.statusCode === 301 || response.statusCode === 302) {
                 resolve(download(response.headers.location, filePath));
                 return;
