@@ -856,14 +856,10 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
      * This serializes the transceivers current direction and mid and returns them
      * for update when an sdp negotiation/renegotiation happens
      */
-    private ReadableArray getTransceiversInfo(int id) {
-        PeerConnectionObserver pco = mPeerConnectionObservers.get(id);
-        if (pco == null) {
-            return null;
-        }
-        PeerConnection peerConnection = pco.getPeerConnection();
+    private ReadableArray getTransceiversInfo(PeerConnection peerConnection) {
         WritableArray transceiverUpdates = Arguments.createArray();
-        for(RtpTransceiver transceiver: peerConnection.getTransceivers()) {
+
+        for (RtpTransceiver transceiver: peerConnection.getTransceivers()) {
             RtpTransceiver.RtpTransceiverDirection direction = transceiver.getCurrentDirection();
             if (direction == null) continue;
             String directionSerialized = SerializeUtils.serializeDirection(direction);
@@ -928,7 +924,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
                     WritableMap sdpInfo = Arguments.createMap();
                     sdpInfo.putString("sdp", sdp.description);
                     sdpInfo.putString("type", sdp.type.canonicalForm());
-                    params.putArray("transceiversInfo", getTransceiversInfo(id));
+                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
                     params.putMap("sdpInfo", sdpInfo);
                     callback.invoke(true, params);
                 }
@@ -967,7 +963,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
                     WritableMap sdpInfo = Arguments.createMap();
                     sdpInfo.putString("sdp", sdp.description);
                     sdpInfo.putString("type", sdp.type.canonicalForm());
-                    params.putArray("transceiversInfo", getTransceiversInfo(id));
+                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
                     params.putMap("sdpInfo", sdpInfo);
                     callback.invoke(true, params);
                 }
@@ -1011,7 +1007,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
                     }
 
                     params.putMap("sdpInfo", newSdpMap);
-                    params.putArray("transceiversInfo", getTransceiversInfo(pcId));
+                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
                     promise.resolve(params);
                 }
 
@@ -1078,7 +1074,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
                         newSdpMap.putString("sdp", newSdp.description);
                     }
 
-                    params.putArray("transceiversInfo", getTransceiversInfo(id));
+                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
                     params.putMap("sdpInfo", newSdpMap);
 
                     WritableArray newTransceivers = Arguments.createArray();
