@@ -1003,20 +1003,22 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onSetSuccess() {
-                    WritableMap newSdpMap = Arguments.createMap();
-                    WritableMap params = Arguments.createMap();
+                    ThreadUtils.runOnExecutor(() -> {
+                        WritableMap newSdpMap = Arguments.createMap();
+                        WritableMap params = Arguments.createMap();
 
-                    SessionDescription newSdp = peerConnection.getLocalDescription();
-                    // Can happen when doing a rollback.
-                    if (newSdp != null) {
-                        newSdpMap.putString("type", newSdp.type.canonicalForm());
-                        newSdpMap.putString("sdp", newSdp.description);
-                    }
+                        SessionDescription newSdp = peerConnection.getLocalDescription();
+                        // Can happen when doing a rollback.
+                        if (newSdp != null) {
+                            newSdpMap.putString("type", newSdp.type.canonicalForm());
+                            newSdpMap.putString("sdp", newSdp.description);
+                        }
 
-                    params.putMap("sdpInfo", newSdpMap);
-                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
+                        params.putMap("sdpInfo", newSdpMap);
+                        params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
 
-                    promise.resolve(params);
+                        promise.resolve(params);
+                    });
                 }
 
                 @Override
@@ -1025,7 +1027,9 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onSetFailure(String s) {
-                    promise.reject("E_OPERATION_ERROR", s);
+                    ThreadUtils.runOnExecutor(() -> {
+                        promise.reject("E_OPERATION_ERROR", s);
+                    });
                 }
             };
 
@@ -1073,32 +1077,34 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onSetSuccess() {
-                    WritableMap newSdpMap = Arguments.createMap();
-                    WritableMap params = Arguments.createMap();
+                    ThreadUtils.runOnExecutor(() -> {
+                        WritableMap newSdpMap = Arguments.createMap();
+                        WritableMap params = Arguments.createMap();
 
-                    SessionDescription newSdp = peerConnection.getRemoteDescription();
-                    // Be defensive for the rollback cases.
-                    if (newSdp != null) {
-                        newSdpMap.putString("type", newSdp.type.canonicalForm());
-                        newSdpMap.putString("sdp", newSdp.description);
-                    }
-
-                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
-                    params.putMap("sdpInfo", newSdpMap);
-
-                    WritableArray newTransceivers = Arguments.createArray();
-                    for(RtpTransceiver transceiver: peerConnection.getTransceivers()) {
-                        if(!receiversIds.contains(transceiver.getReceiver().id())) {
-                            WritableMap newTransceiver = Arguments.createMap();
-                            newTransceiver.putInt("transceiverOrder", pco.getNextTransceiverId());
-                            newTransceiver.putMap("transceiver", SerializeUtils.serializeTransceiver(id, transceiver));
-                            newTransceivers.pushMap(newTransceiver);
+                        SessionDescription newSdp = peerConnection.getRemoteDescription();
+                        // Be defensive for the rollback cases.
+                        if (newSdp != null) {
+                            newSdpMap.putString("type", newSdp.type.canonicalForm());
+                            newSdpMap.putString("sdp", newSdp.description);
                         }
-                    }
 
-                    params.putArray("newTransceivers", newTransceivers);
+                        params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
+                        params.putMap("sdpInfo", newSdpMap);
 
-                    promise.resolve(params);
+                        WritableArray newTransceivers = Arguments.createArray();
+                        for(RtpTransceiver transceiver: peerConnection.getTransceivers()) {
+                            if(!receiversIds.contains(transceiver.getReceiver().id())) {
+                                WritableMap newTransceiver = Arguments.createMap();
+                                newTransceiver.putInt("transceiverOrder", pco.getNextTransceiverId());
+                                newTransceiver.putMap("transceiver", SerializeUtils.serializeTransceiver(id, transceiver));
+                                newTransceivers.pushMap(newTransceiver);
+                            }
+                        }
+
+                        params.putArray("newTransceivers", newTransceivers);
+
+                        promise.resolve(params);
+                    });
                 }
 
                 @Override
@@ -1107,7 +1113,9 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onSetFailure(String s) {
-                    promise.reject("E_OPERATION_ERROR", s);
+                    ThreadUtils.runOnExecutor(() -> {
+                        promise.reject("E_OPERATION_ERROR", s);
+                    });
                 }
             };
 
