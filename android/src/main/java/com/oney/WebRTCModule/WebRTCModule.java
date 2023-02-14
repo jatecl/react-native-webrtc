@@ -889,7 +889,7 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void mediaStreamTrackSetVideoEffect(String id, String name) {
         ThreadUtils.runOnExecutor(() -> {
-                getUserMediaImpl.setVideoEffect(id, name);
+            getUserMediaImpl.setVideoEffect(id, name);
         });
     }
 
@@ -909,31 +909,38 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void peerConnectionCreateOffer(int id,
                                           ReadableMap options,
-                                          Callback callback) {
+                                          Promise promise) {
         ThreadUtils.runOnExecutor(() -> {
             PeerConnection peerConnection = getPeerConnection(id);
 
             if (peerConnection == null) {
                 Log.d(TAG, "peerConnectionCreateOffer() peerConnection is null");
-                callback.invoke(false, "peerConnection is null");
+                promise.reject(new Exception("PeerConnection not found"));
                 return;
             }
 
-            peerConnection.createOffer(new SdpObserver() {
+            final SdpObserver observer = new SdpObserver() {
                 @Override
                 public void onCreateFailure(String s) {
-                    callback.invoke(false, s);
+                    ThreadUtils.runOnExecutor(() -> {
+                        promise.reject("E_OPERATION_ERROR", s);
+                    });
                 }
 
                 @Override
                 public void onCreateSuccess(SessionDescription sdp) {
-                    WritableMap params = Arguments.createMap();
-                    WritableMap sdpInfo = Arguments.createMap();
-                    sdpInfo.putString("sdp", sdp.description);
-                    sdpInfo.putString("type", sdp.type.canonicalForm());
-                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
-                    params.putMap("sdpInfo", sdpInfo);
-                    callback.invoke(true, params);
+                    ThreadUtils.runOnExecutor(() -> {
+                        WritableMap params = Arguments.createMap();
+                        WritableMap sdpInfo = Arguments.createMap();
+
+                        sdpInfo.putString("sdp", sdp.description);
+                        sdpInfo.putString("type", sdp.type.canonicalForm());
+
+                        params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
+                        params.putMap("sdpInfo", sdpInfo);
+
+                        promise.resolve(params);
+                    });
                 }
 
                 @Override
@@ -941,38 +948,47 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onSetSuccess() {}
-            }, constraintsForOptions(options));
+            };
+
+            peerConnection.createOffer(observer, constraintsForOptions(options));
         });
     }
 
     @ReactMethod
     public void peerConnectionCreateAnswer(int id,
                                            ReadableMap options,
-                                           Callback callback) {
+                                           Promise promise) {
         ThreadUtils.runOnExecutor(() -> {
             PeerConnection peerConnection = getPeerConnection(id);
 
             if (peerConnection == null) {
                 Log.d(TAG, "peerConnectionCreateAnswer() peerConnection is null");
-                callback.invoke(false, "peerConnection is null");
+                promise.reject(new Exception("PeerConnection not found"));
                 return;
             }
 
-            peerConnection.createAnswer(new SdpObserver() {
+            final SdpObserver observer = new SdpObserver() {
                 @Override
                 public void onCreateFailure(String s) {
-                    callback.invoke(false, s);
+                    ThreadUtils.runOnExecutor(() -> {
+                        promise.reject("E_OPERATION_ERROR", s);
+                    });
                 }
 
                 @Override
                 public void onCreateSuccess(SessionDescription sdp) {
-                    WritableMap params = Arguments.createMap();
-                    WritableMap sdpInfo = Arguments.createMap();
-                    sdpInfo.putString("sdp", sdp.description);
-                    sdpInfo.putString("type", sdp.type.canonicalForm());
-                    params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
-                    params.putMap("sdpInfo", sdpInfo);
-                    callback.invoke(true, params);
+                    ThreadUtils.runOnExecutor(() -> {
+                        WritableMap params = Arguments.createMap();
+                        WritableMap sdpInfo = Arguments.createMap();
+
+                        sdpInfo.putString("sdp", sdp.description);
+                        sdpInfo.putString("type", sdp.type.canonicalForm());
+
+                        params.putArray("transceiversInfo", getTransceiversInfo(peerConnection));
+                        params.putMap("sdpInfo", sdpInfo);
+
+                        promise.resolve(params);
+                    });
                 }
 
                 @Override
@@ -980,7 +996,9 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
 
                 @Override
                 public void onSetSuccess() {}
-            }, constraintsForOptions(options));
+            };
+
+            peerConnection.createAnswer(observer, constraintsForOptions(options));
         });
     }
 
