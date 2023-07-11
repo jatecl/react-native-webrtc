@@ -838,6 +838,11 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void setOrientation(int orientation) {
+        com.oney.WebRTCModule.rewrite.Camera1Session.LockOrientation = orientation;
+    }
+
+    @ReactMethod
     public void mediaStreamTrackSwitchCamera(String id) {
         ThreadUtils.runOnExecutor(() -> {
             MediaStreamTrack track = getLocalTrack(id);

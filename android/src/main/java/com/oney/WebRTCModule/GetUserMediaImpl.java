@@ -70,13 +70,14 @@ class GetUserMediaImpl {
             Log.w(TAG, "Error checking for Camera2 API support.", tr);
         }
 
-        if (camera2supported) {
-            Log.d(TAG, "Creating video capturer using Camera2 API.");
-            cameraEnumerator = new Camera2Enumerator(reactContext);
-        } else {
-            Log.d(TAG, "Creating video capturer using Camera1 API.");
-            cameraEnumerator = new Camera1Enumerator(false);
-        }
+        // if (camera2supported) {
+        //     Log.d(TAG, "Creating video capturer using Camera2 API.");
+        //     cameraEnumerator = new Camera2Enumerator(reactContext);
+        // } else {
+        //     Log.d(TAG, "Creating video capturer using Camera1 API.");
+        //     cameraEnumerator = new Camera1Enumerator(false);
+        // }
+        cameraEnumerator = new com.oney.WebRTCModule.rewrite.Camera1Enumerator(false);
 
         reactContext.addActivityEventListener(new BaseActivityEventListener() {
             @Override

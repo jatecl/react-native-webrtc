@@ -18,6 +18,10 @@ class MediaDevices extends defineCustomEventTarget(...MEDIA_DEVICES_EVENTS) {
         return new Promise(resolve => WebRTCModule.enumerateDevices(resolve));
     }
 
+    setOrientation(orientation: number) {
+        WebRTCModule.setOrientation(orientation);
+    }
+
     /**
      * W3C "Screen Capture" compatible {@code getDisplayMedia} implementation.
      * See: https://w3c.github.io/mediacapture-screen-share/
