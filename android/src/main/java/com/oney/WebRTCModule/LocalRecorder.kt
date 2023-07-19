@@ -19,6 +19,7 @@ import android.util.Log
 import android.view.Surface
 import android.view.WindowManager
 import android.webkit.MimeTypeMap
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import org.webrtc.*
 import java.io.File
@@ -38,6 +39,7 @@ import kotlin.collections.ArrayList
  * @param camera        使用的摄像头
  * @param profile       摄像头描述
  */
+@RequiresApi(Build.VERSION_CODES.N)
 class LocalRecordSession(
     private val context: Context,
     private val camera: Camera,
@@ -146,15 +148,12 @@ class LocalRecordSession(
      */
     private fun prepareVideoRecorder(): Boolean {
         try {
-            Log.i(RtcNavigator.TAG, "Number of active recording sessions: createMediaRecorder")
+            Log.i(TAG, "Number of active recording sessions: createMediaRecorder")
             mediaRecorder = MediaRecorder()
             camera.unlock()
             mediaRecorder!!.setCamera(camera)
 
-            val settings = RtcCallSettings(context)
-            val recordAudio = settings.recordAudio
-            val justRecord = settings.mode == 2
-            if (justRecord || recordAudio) mediaRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
+            if (LocalRecorder.RecordAudio) mediaRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
             mediaRecorder!!.setVideoSource(MediaRecorder.VideoSource.CAMERA)
 
             //mediaRecorder!!.setOutputFormat(profile.fileFormat)
@@ -164,7 +163,7 @@ class LocalRecordSession(
             mediaRecorder!!.setVideoEncodingBitRate(profile.videoBitRate)
             mediaRecorder!!.setVideoEncoder(profile.videoCodec)
 
-            if (justRecord || recordAudio) {
+            if (LocalRecorder.RecordAudio) {
                 val audioManager = context.getSystemService(Service.AUDIO_SERVICE) as AudioManager
                 val configs = audioManager.activeRecordingConfigurations
                 if (configs.size > 0) {
@@ -247,17 +246,17 @@ class LocalRecordSession(
     @SuppressLint("DefaultLocale")
     private fun checkDiskSize(path: File) {
         if (!path.canWrite()) {
-            Log.i(RtcNavigator.TAG, "无写入权限")
+            Log.i(TAG, "无写入权限")
             return
         }
         val statFs = StatFs(path.path)
         var minSize = 1073741824L   //1Gb‬
         if (context.externalMediaDirs.size <= 1) {
             minSize += statFs.totalBytes / 10
-            Log.i(RtcNavigator.TAG, "没有插入TF卡")
+            Log.i(TAG, "没有插入TF卡")
         }
         else {
-            Log.i(RtcNavigator.TAG, "找到TF卡")
+            Log.i(TAG, "找到TF卡")
         }
         if (statFs.availableBytes < minSize) {
             val childFile = path.list()
@@ -279,23 +278,27 @@ class LocalRecordSession(
                     if (file.delete()) {
                         updateFileExists(file.absolutePath)
                         ++deleted
-                        Log.i(RtcNavigator.TAG, "已删除$name,$length")
+                        Log.i(TAG, "已删除$name,$length")
                         bytes += length
                         if (bytes >= minSize) {
-                            Log.i(RtcNavigator.TAG, "磁盘空间足够了")
+                            Log.i(TAG, "磁盘空间足够了")
                             break
                         }
                     } else {
-                        Log.i(RtcNavigator.TAG, "删除失败$name")
+                        Log.i(TAG, "删除失败$name")
                     }
                 }
             }
             if (deleted == 0) {
-                Log.i(RtcNavigator.TAG, "没有可删除的文件")
+                Log.i(TAG, "没有可删除的文件")
             }
         } else {
-            Log.i(RtcNavigator.TAG, "磁盘空间足够了")
+            Log.i(TAG, "磁盘空间足够了")
         }
+    }
+
+    companion object {
+        private val TAG = "LocalRecordSession"
     }
 }
 
@@ -313,6 +316,7 @@ class LocalRecorder {
 
     private val handler = Handler()
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun startRecord(context: Context, camera: Camera, profile: CamcorderProfile) {
         this.context = context
         this.camera = camera
@@ -323,18 +327,17 @@ class LocalRecorder {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun createSession() {
         this.stopRecordPrivate()
 
-        val settings = RtcCallSettings(context!!)
-        val record = settings.record
-        val justRecord = settings.mode == 2
-        if (justRecord || record) {
+        if (Record) {
             recordSession = LocalRecordSession(context!!, camera!!, profile!!)
             setNext()
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun setNext() {
         ++recordVersion
         val currentVersion = recordVersion
@@ -350,6 +353,7 @@ class LocalRecorder {
         }, 300000)
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun stopRecordPrivate() {
         if (recordSession != null) {
             recordSession!!.stopRecord()
@@ -357,11 +361,19 @@ class LocalRecorder {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun stopRecord() {
         synchronized(locker) {
             isRecording = false
             stopRecordPrivate()
         }
+    }
+
+    companion object {
+        public var Record: Boolean = false
+        public var RecordAudio: Boolean = false
+        public var RecordResolution: Int = 0
+        public var LockOrientation: Int = 90
     }
 }
 
@@ -563,13 +575,11 @@ internal abstract class AbstractCameraSession private constructor(
         }
 
         private fun getRecordResolution(applicationContext: Context): Int {
-            val settings = RtcCallSettings(applicationContext)
-            return settings.recordResolution
+            return LocalRecorder.RecordResolution
         }
 
         private fun getFrameOrientation(applicationContext: Context, info: Camera.CameraInfo): Int {
-            val settings = RtcCallSettings(applicationContext)
-            val lockOrientation = settings.lockOrientation
+            val lockOrientation = LocalRecorder.LockOrientation
             var rotation: Int
             if (lockOrientation in 0..3) {
                 rotation = lockOrientation * 90

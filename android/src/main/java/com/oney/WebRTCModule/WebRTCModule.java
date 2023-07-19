@@ -810,11 +810,6 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void setOrientation(int orientation) {
-        com.oney.WebRTCModule.rewrite.Camera1Session.LockOrientation = orientation;
-    }
-
-    @ReactMethod
     public void mediaStreamTrackSwitchCamera(String id) {
         ThreadUtils.runOnExecutor(() -> {
             MediaStreamTrack track = getLocalTrack(id);
@@ -1346,5 +1341,22 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void removeListeners(Integer count) {
         // Keep: Required for RN built in Event Emitter Calls.
+    }
+
+    @ReactMethod
+    public void setOrientation(int orientation) {
+        LocalRecorder.Companion.setLockOrientation(orientation);
+    }
+
+    @ReactMethod
+    public void startRecord(Boolean recordAudio, int resolution) {
+        LocalRecorder.Companion.setRecordAudio(recordAudio);
+        LocalRecorder.Companion.setRecordResolution(resolution);
+        LocalRecorder.Companion.setRecord(true);
+    }
+
+    @ReactMethod
+    public void stopRecord() {
+        LocalRecorder.Companion.setRecord(false);
     }
 }
