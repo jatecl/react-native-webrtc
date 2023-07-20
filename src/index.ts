@@ -24,6 +24,7 @@ import RTCRtpTransceiver from './RTCRtpTransceiver';
 import RTCSessionDescription from './RTCSessionDescription';
 import RTCView from './RTCView';
 import ScreenCapturePickerView from './ScreenCapturePickerView';
+import MediaRecorder from "./MediaRecorder";
 
 Logger.enable(`${Logger.ROOT_PREFIX}:*`);
 
@@ -44,7 +45,8 @@ export {
     MediaStreamTrack,
     mediaDevices,
     permissions,
-    registerGlobals
+    registerGlobals,
+    MediaRecorder
 };
 
 declare const global: any;
@@ -75,4 +77,5 @@ function registerGlobals(): void {
     global.RTCRtpReceiver = RTCRtpReceiver;
     global.RTCRtpSender = RTCRtpSender;
     global.RTCErrorEvent = RTCErrorEvent;
+    global.MediaRecorder = MediaRecorder;
 }

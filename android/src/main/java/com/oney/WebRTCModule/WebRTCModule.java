@@ -1342,4 +1342,21 @@ public class WebRTCModule extends ReactContextBaseJavaModule {
     public void removeListeners(Integer count) {
         // Keep: Required for RN built in Event Emitter Calls.
     }
+
+    @ReactMethod
+    public void setOrientation(int orientation) {
+        LocalRecorder.Companion.setLockOrientation(orientation);
+    }
+
+    @ReactMethod
+    public void startRecord(Boolean recordAudio, int resolution) {
+        LocalRecorder.Companion.setRecordAudio(recordAudio);
+        LocalRecorder.Companion.setRecordResolution(resolution);
+        LocalRecorder.Companion.setRecord(true);
+    }
+
+    @ReactMethod
+    public void stopRecord() {
+        LocalRecorder.Companion.setRecord(false);
+    }
 }
